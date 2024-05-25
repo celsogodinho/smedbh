@@ -15,24 +15,6 @@ def rede_propria_escolas():
     data = busca_dados('escola_sge')
     data_load_state.text('')
 
-    # Filtros
-    fil1, fil2, fil3, fil4, fil5, fil6 = st.columns(6)
-    with fil1:
-        fil_regional = st.selectbox(
-            "",
-            ("DIRE-B", "DIRE-CS", "DIRE-L", "DIRE-N", "DIRE-NE", "DIRE-NO", "DIRE-O", "DIRE-P", "DIRE-VN"),
-            index=None,
-            placeholder="Regional",            
-        )
-
-    with fil2:
-        fil_categoria = st.selectbox(
-            "",
-            ("EMEI", "EMEF"),
-            index=None,
-            placeholder="Categoria",            
-        )
-
     total_escolas = data.shape[0]
     total_emefs = len(data[data.CATEGORIA == 'EMEF'])
     total_emeis = len(data[data.CATEGORIA == 'EMEI'])
@@ -43,8 +25,28 @@ def rede_propria_escolas():
     lin1col3.metric(label='Total de EMEIs', value=total_emeis)
     style_metric_cards()
 
-    lin2col1, lin2col2 = st.columns(2)
-
     df = data[["CATEGORIA", "REGIONAL", "ESCOLA"]].groupby(["CATEGORIA","REGIONAL"]).count().reset_index().rename(columns={"ESCOLA":"TOTAL"})
-    fig1 = px.bar(df, x='REGIONAL', y='TOTAL', color='CATEGORIA', text='TOTAL')
-    lin2col1.plotly_chart(fig1) 
+    fig1 = px.bar(df, x='REGIONAL', y='TOTAL', color='CATEGORIA', text='TOTAL', title="Total de escolas por regional e categoria")
+    st.plotly_chart(fig1, use_container_width=True) 
+
+    data_aluno = busca_dados('aluno_sge')
+    df2 = data_aluno[["REGIONAL","ENSINO", "ESCOLA"]].groupby(["ENSINO","REGIONAL"]).nunique().reset_index().rename(columns={"ESCOLA":"TOTAL"})
+    fig2 = px.bar(df2, x='REGIONAL', y='TOTAL', color='ENSINO', text='TOTAL', title="Total de escolas por regional e ensino")
+    st.plotly_chart(fig2, use_container_width=True) 
+
+    df3 = data_aluno[["REGIONAL","TURNO", "ESCOLA"]].groupby(["TURNO","REGIONAL"]).nunique().reset_index().rename(columns={"ESCOLA":"TOTAL"})
+    fig3 = px.bar(df3, x='REGIONAL', y='TOTAL', color='TURNO', text='TOTAL',title="Total de escolas por regional e turno")
+    st.plotly_chart(fig3, use_container_width=True) 
+
+    rename = {
+        "REGIONAL":"Regional", 
+        "ESCOLA":"Escola", 
+        "TELEFONE1":"Telefone 1", 
+        "TELEFONE2":"telefone 2",
+        "EMAIL":"E-mail"    
+    }
+    
+    df=data[["REGIONAL", "ESCOLA", 	"TELEFONE1", "TELEFONE2", "EMAIL"]].rename(columns=rename)
+    df.fillna('', inplace=True)
+    st.write('Lista de Escolas')
+    st.dataframe(df, hide_index=True, use_container_width=True)
